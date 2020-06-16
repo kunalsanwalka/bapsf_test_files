@@ -18,7 +18,7 @@ from scipy.interpolate import griddata
 #Frequencies at which the simulation was run
 #Note: This is the only variable defined with a linear frequency.
 #      Every other frequency variable uses angular frequency.
-freqArr=[80,108,206,275,343,378,446,480,500,530,560]
+freqArr=[37,80,108,206,275,343,378,446,480,500,530,560]
 
 #Plasma Parameters
 #Magnetic field
@@ -26,13 +26,13 @@ magB=0.15 #Tesla
 #Density of the plasma
 ne=0.5e18 #m^{-3}
 #Collisionality of the plasma
-nu_e=1e6 #Hz
+nu_e=5e6 #Hz
 
 #Data Directory
-dataDir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/New Density/'
+dataDir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/PML Test/'
 
 #Savepath location
-savepath='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/handedness_ratio_perpWavelength.png'
+savepath='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/polarization_ratio_withPML.png'
 
 ###############################################################################
 
@@ -55,6 +55,11 @@ Pi_e=np.sqrt((ne*q_e**2)/(eps_0*m_e)) #Electron plasma frequency
 
 #Calculate the plasma skin depth
 plasmaSD=c/Pi_e
+
+#%%
+# =============================================================================
+# Functions
+# =============================================================================
 
 def dataArr(filename):
     """
@@ -246,6 +251,11 @@ def squareDiff(arr1,arr2):
     
     return chiSq
 
+#%%
+# =============================================================================
+# Analysis    
+# =============================================================================
+
 #Sort the frequencies in ascending order
 freqArr.sort()
 #Convert to numpy array
@@ -350,8 +360,9 @@ analFreqArr/=cycFreqNe
 #Perpendicular wavelength
 lambdaPerpArr/=plasmaSD
 
+#%%
 # =============================================================================
-# Plot the data
+# Plotting
 # =============================================================================
 
 #Make the plot
@@ -362,11 +373,11 @@ for i in range(len(lambdaPerpArr)):
     p1=plt.plot(analFreqArr,analRatio[i],label=r'$\lambda_{\perp}/\delta_e=$'+str(np.round(lambdaPerpArr[i],2)))
 
 #Plot the simulation data
-plt.scatter(normFreqArr,ratioArr,label='Simulation Data')
+plt.scatter(normFreqArr,ratioArr,label='Simulation Data',color='red')
 
 #Plot the cyclotron frequencies
-plt.plot([1,1],[min(ratioArr)-0.01,max(ratioArr)+0.01],label=r'$\Omega_{Neon}$',color='k',linestyle='-',linewidth=2)
-plt.plot(np.full(2,cycFreqHe/cycFreqNe),[min(ratioArr)-0.01,max(ratioArr)+0.01],label=r'$\Omega_{Helium}$',color='k',linestyle=':')
+plt.plot([1,1],[min(ratioArr)-0.05,max(ratioArr)+0.05],label=r'$\Omega_{Neon}$',color='k',linestyle='-',linewidth=2)
+plt.plot(np.full(2,cycFreqHe/cycFreqNe),[min(ratioArr)-0.05,max(ratioArr)+0.05],label=r'$\Omega_{Helium}$',color='k',linestyle=':')
 
 #Add the labels and title
 plt.title(r'B=0.15T; n=$5 \cdot 10^{17} m^{-3}$; 50/50 He/Ne')
@@ -374,9 +385,14 @@ plt.xlabel(r'Normalized Angular Frequency [$\omega/\Omega_{Neon}$]')
 plt.ylabel(r'Polarization Ratio [$|B_L/B_R|^2$]',rotation=90)
 
 #Miscellaneous
-plt.ylim(min(ratioArr)-0.01,max(ratioArr)+0.01)
 plt.grid(True)
-plt.legend(bbox_to_anchor=(1.53,1.03),loc='upper right')
+plt.ylim(min(ratioArr)-0.05,max(ratioArr)+0.05)
+plt.xlim(0,cycFreqHe/cycFreqNe+0.1)
+
+#Add legend
+plt.legend(bbox_to_anchor=(1.48,1.03),loc='upper right')
+
+#Show and close the plot
 plt.savefig(savepath,dpi=600,bbox_inches='tight')
 plt.show()
 plt.close()

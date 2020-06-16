@@ -21,16 +21,16 @@ freq=480 #KHz #Frequency of the antenna
 data_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/PML Test/'
 
 #Savepath directory
-savepath_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/By_axialAmp_PMLeffect.png'
+savepath_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/By_axialAmp_PMLeffect_freq_500KHz.png'
 # #Name of the data files
 # filenameArr=['By_XZ_Plane_freq_'+str(freq)+'KHz_col_500KHz.hdf','By_XZ_Plane_freq_'+str(freq)+'KHz_newBC.hdf','By_XZ_Plane_freq_'+str(freq)+'KHz_col_2000KHz.hdf','By_XZ_Plane_freq_'+str(freq)+'KHz_col_5000KHz.hdf']
 # #Array with the legend for each datafile
 # legendArr=[r'$\nu_{ei}$=500KHz',r'$\nu_{ei}$=1000KHz',r'$\nu_{ei}$=2000KHz',r'$\nu_{ei}$=5000KHz']
 
 #Name of the data files
-filenameArr=['ramp0.hdf','ramp2.hdf']
+filenameArr=['By_XZ_Plane_freq_37KHz.hdf','By_XZ_Plane_freq_343KHz.hdf','By_XZ_Plane_freq_378KHz.hdf','By_XZ_Plane_freq_446KHz.hdf','By_XZ_Plane_freq_560KHz.hdf']
 #Legend form each datafile
-legendArr=['No PML','With PML']
+legendArr=['37','343','378','446','560']
 ###############################################################################
 
 def dataArr(filename):
@@ -158,7 +158,7 @@ def interpData(ampData,xVals,zVals):
     return interpData,xi,zi
 
 #Create the plot
-fig=plt.figure(figsize=(15,4))
+fig=plt.figure(figsize=(10,4))
 ax=fig.add_subplot(111)
 
 #Plot the data from each file
@@ -186,6 +186,9 @@ for i in range(len(filenameArr)):
 
     ax.plot(zAxisVals,ByAxialAmp,label=legendArr[i])
 
+#Plot PML Line
+ax.plot([8,8],[-1,1],label='PML Boundary',linestyle='dashed',color='k')
+
 #Add labels
 ax.set_title('Effect of PML Damping')
 ax.set_xlabel('Z [m]')
@@ -193,18 +196,18 @@ ax.set_ylabel(r'$\Re(B_y)$')
 
 #Change axis scaling and limits
 # ax.set_yscale('symlog',linthreshy=10e-11)
-ax.set_xlim(-5,5)
+ax.set_xlim(0.2,8)
 ax.set_ylim(-1.5e-9,1.5e-9)
 
 #Define legend
 ax.legend()
-ax.legend(bbox_to_anchor=(1.25,1.03),loc='upper right')
+ax.legend(bbox_to_anchor=(1.205,1.03),loc='upper right')
 
 #Miscellaneous
 ax.grid(True)
 ax.ticklabel_format(axis='y',style='sci',scilimits=(-1,1))
 
 #Save the figure and close it
-plt.savefig(savepath_dir,dpi=600,bbox_inches='tight')
+# plt.savefig(savepath_dir,dpi=600,bbox_inches='tight')
 plt.show()
 plt.close()

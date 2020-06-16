@@ -16,7 +16,7 @@ from scipy.interpolate import griddata
 ###############################################################################
 #############################User defined variables############################
 ###############################################################################
-freqArr=[37,80,108,275,343,378,446,480,500,530,560] #Array with all the frequencies
+freqArr=[37,80,108,206,275,343,378,446,480,500,530,560] #Array with all the frequencies
 
 #Data Directory
 data_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/PML Test/'
@@ -216,7 +216,6 @@ def fourierTransform(ByVals,zVals,freq):
     Args:
         ByVals: By values along r=0
         zVals: z-axis values
-        freq: Frequency of the simulation
     Returns:
         ByF: Fourier transformed By data
         kArr: Array with the corresponding k values
@@ -249,18 +248,18 @@ def fourierTransform(ByVals,zVals,freq):
     ByF=ByF[:int(len(ByF)/2)]
     kArr=kArr[:int(len(kArr)/2)]
     
-    plt.plot(2*np.pi*kArr,ByF)
+    plt.plot(kArr,ByF)
     plt.grid()
-    plt.xlabel(r'$k_{||}$')
-    plt.xlim(0,6)
-    plt.ylabel('Amplitude')
+    plt.xlabel('k_par')
+    plt.xlim(0,1)
+    plt.ylabel('Magnitude')
     plt.title(str(freq)+'KHz')
     plt.show()
     plt.close()
     
     return ByF,kArr
     
-def peakWavenumber(ByF,kArr,freq):
+def peakWavenumber(ByF,kArr):
     """
     This function takes the fourier transformed data and finds the dominant
     wavenumber.
@@ -268,7 +267,6 @@ def peakWavenumber(ByF,kArr,freq):
     Args:
         ByF: Fourier transformed data
         kArr: Array with the wavenumbers
-        freq: Frequency of the simulation
     Returns:
         peakK: Most prominent wavenumber
     """
@@ -278,9 +276,6 @@ def peakWavenumber(ByF,kArr,freq):
     
     #Find the corresponding wavenumber
     peakK=kArr[maxVal]
-    
-    if freq==446:
-        peakK=kArr[2]
     
     return peakK
 
@@ -407,13 +402,11 @@ def finiteKPerpdispRel(w):
 
 #%%
 # =============================================================================
-# Simulation Dispersion Relation
+# Simulation Dispersion Relationm
 # =============================================================================
 
 #Array to store the wavenumbers
 kParArr=[]
-#Errorbar value
-errBar=0
 
 #Go over each frequency to get the parallel angular wavenumber
 for freq in freqArr:
@@ -446,16 +439,13 @@ for freq in freqArr:
     ByF,kArr=fourierTransform(ByAmp,zVals,freq)
     
     #Find the peak wavenumber
-    wavenum=peakWavenumber(ByF,kArr,freq)
+    wavenum=peakWavenumber(ByF,kArr)
     
     #Convert to angular wavenumber
     kPar=2*np.pi*wavenum
     
     #Add to the array
     kParArr.append(kPar)
-    
-    #Define the errorbar
-    errBar=2*np.pi*(kArr[1]-kArr[0])
     
 #Normalize the frequency
 normFreqArr=np.array(freqArr)/Omega_Ne
@@ -487,8 +477,6 @@ normFreqArrAnal=omegaArr/(2*np.pi*Omega_Ne*1000) #Becuase Omega_Ne is linear
 # Plot the data
 # =============================================================================
 
-plt.figure()
-
 #Define the axes labels
 plt.title(r'B=0.15T; n=$5 \cdot 10^{17} m^{-3}$; 50/50 He/Ne')
 plt.xlabel(r'Normalized Angular Frequency [$\omega/\Omega_{Ne}$]')
@@ -500,9 +488,6 @@ plt.plot(normFreqArrAnal,finiteKPerpArr,label=r'$\lambda_{\perp}/\delta_e=$'+str
 plt.plot(normFreqArrAnal,lhpArr,label=r'LHP ($\lambda_{\perp}/\delta_e=\infty$)',linestyle='dashed')
 plt.plot(normFreqArrAnal,rhpArr,label=r'RHP ($\lambda_{\perp}/\delta_e=\infty$)',linestyle='dashed')
 
-#Plot the errorbar
-plt.errorbar(normFreqArr,kParArr,yerr=errBar/2,fmt='o')
-
 #Plot the normalized frequencies
 plt.plot([1,1],[0,max(kParArr)+0.5],label=r'$\Omega_{Neon}$',color='k',linestyle='-')
 plt.plot([Omega_He/Omega_Ne,Omega_He/Omega_Ne],[0,max(kParArr)+0.5],label=r'$\Omega_{Helium}$',color='k',linestyle=':')
@@ -513,9 +498,9 @@ plt.xlim(0,Omega_He/Omega_Ne+0.1)
 plt.ylim(0,max(kParArr)+0.25)
 
 #Add the legend
-plt.legend(bbox_to_anchor=(1.37,1.03),loc='upper right')
+plt.legend(bbox_to_anchor=(1.48,1.03),loc='upper right')
 
 #Show and close the plot
-# plt.savefig(savepath,dpi=600,bbox_inches='tight')
+plt.savefig(savepath,dpi=600,bbox_inches='tight')
 plt.show()
 plt.close()

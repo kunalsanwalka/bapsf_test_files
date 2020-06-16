@@ -22,18 +22,32 @@ m_amu=1.66053906660e-27 #Atomic Mass Unit
 # =============================================================================
 # User Defined Variables
 # =============================================================================
+
 #Plasma Parameters
-freq=76.4    #KHz #Antenna Frequency
+freq=80     #KHz #Antenna Frequency
 B=0.1       #T #Magnetic Field Strength
 n=1.4e18    #m^{-3} #Density
-col=2000       #KHz #Collisionality
+col=4.75       #KHz #Collisionality
 
 #Data directory
-data_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/By_XZ_Plane_karavaev_withdamping_withoutPML.hdf'
+data_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/By_XZ_Plane_karavaev_withdamping_withPML_3rdOrder.hdf'
 #Savepath Directory
-savepath='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/karavaev_withdamping_withoutPML.png'
+savepath='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/karavaev_withdamping_withPML_3rdOrder.png'
+
+# =============================================================================
+# Derived Variables
 # =============================================================================
 
+#Normalized Antenna Frequency
+Omega_He=q_p*B/(4*m_amu) #Helium Cyclotron Frequency
+normFreq=2*np.pi*1000*freq/Omega_He
+
+#Electron plasma frequency
+Pi_e=np.sqrt((n*q_e**2)/(eps_0*m_e))
+
+#Plasma skin depth
+plasmaSD=c/Pi_e
+#%%
 def dataArr(filename):
     """
     This function takes the name of an hdf5 file and returns the relevant data arrays
@@ -160,20 +174,12 @@ def interpData(ampData,xVals,zVals):
 
     return interpData,xi,zi
 
-#Normalized Antenna Frequency
-Omega_He=q_p*B/(4*m_amu) #Helium Cyclotron Frequency
-normFreq=2*np.pi*1000*freq/Omega_He
-
-#Electron plasma frequency
-Pi_e=np.sqrt((n*q_e**2)/(eps_0*m_e))
-
-#Plasma skin depth
-plasmaSD=c/Pi_e
-
+#%%
 # =============================================================================
-# Get the data
+# Simulation data
 # =============================================================================
 
+#Pull data from the hdf5 file
 By,X,Z=dataArr(data_dir)
 
 #Interpolate the data
@@ -183,13 +189,14 @@ By,X,Z=interpData(By,X,Z)
 X=X/plasmaSD
 Z=Z/plasmaSD
 
+#%%
 # =============================================================================
 # Plot the data
 # =============================================================================
 
 #Limits of the contour plot
-contourMin=-2.5e-10
-contourMax=2.5e-10
+contourMin=-9e-10
+contourMax=9e-10
 
 #Spacing of the contour lines
 levelArr=np.linspace(contourMin,contourMax,500)
@@ -213,5 +220,5 @@ p1=plt.ylabel(r'$x / \delta_e$')
 p1=plt.title(r'Gas= $He^+$;'+r' $\omega / \Omega_{He}=$'+str(np.round(normFreq,2))+r'; $\nu_{e}=$'+str(col)+r'KHz; $B_0=$'+str(B)+'T')
 
 plt.grid(True)
-plt.savefig(savepath,dpi=600,bbox_inches='tight')
+plt.savefig(savepath,dpi=300,bbox_inches='tight')
 plt.show()

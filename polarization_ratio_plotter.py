@@ -12,10 +12,10 @@ import matplotlib.pyplot as plt
 freq=480 #KHz
 
 #Collisionalities of the simulations
-nu_eArr=[0.5e6,2e6,5e6] #Hz
+nu_eArr=[2e6,5e6] #Hz
 
 #Savepath
-savepath='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/LH_fraction_XY_integral_r_50cm.png'
+savepath='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/LH_fraction_XY_integral_r_3cm.png'
 
 #Create the plot
 plt.figure(figsize=(15,4))
@@ -24,7 +24,7 @@ plt.figure(figsize=(15,4))
 for nu_e in nu_eArr:
     
     #Open the arrays
-    ratioArr=np.loadtxt('C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/freq_'+str(freq)+'KHz_col_'+str(int(nu_e/1000))+'KHz/ratioArr_r_50cm.txt')
+    ratioArr=np.loadtxt('C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/freq_'+str(freq)+'KHz_col_'+str(int(nu_e/1000))+'KHz/ratioArr_r_3cm.txt')
     zPosArr=np.loadtxt('C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/freq_'+str(freq)+'KHz_col_'+str(int(nu_e/1000))+'KHz/zPosArr.txt')
     
     #Plot the LH fraction

@@ -1,44 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr 22 10:23:47 2020
+Created on Sun May 31 19:23:51 2020
 
 @author: kunalsanwalka
 """
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py
 from scipy.interpolate import griddata
-
-###############################################################################
-###########################  User defined variables  ##########################
-###############################################################################
-
-#Simulation frequency
-#Note: This is the only variable defined with a linear frequency.
-#      Every other frequency variable uses angular frequency.
-freq=480
-
-#Radial limit (radius upto which we want to integrate the solution)
-radLim=0.03
-
-#Array with the positions of the slices
-zPosArr=np.arange(0,1001,25) #cm
-
-#Plasma Parameters
-#Magnetic field
-magB=0.15 #Tesla
-#Density of the plasma
-ne=0.5e18 #m^{-3}
-#Collisionality of the plasma
-nu_e=0.5e6 #Hz
-
-#Data Directory
-dataDir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/freq_'+str(freq)+'KHz_col_'+str(int(nu_e/1000))+'KHz/'
-#Savepath location
-savepath='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/handedness_ratio_XY_integral_col_'+str(int(nu_e/1000))+'KHz_r_50cm.png'
-
-###############################################################################
+plt.rcParams.update({'font.size':20})
 
 #Fundamental values
 c=299792458             #Speed of light
@@ -47,6 +19,50 @@ q_e=-1.60217662e-19     #Electron Charge
 q_p=1.60217662e-19      #Proton Charge
 m_e=9.10938356e-31      #Electron Mass
 m_amu=1.66053906660e-27 #Atomic Mass Unit
+
+# =============================================================================
+# User defined variables
+# =============================================================================
+
+#Plasma Parameters
+freq=80                 #KHz #Antenna Frequency
+magB=0.1                #T      #Magnetic Field Stength
+ne=1.3e18               #m^{-3} #Plasma Density
+nu_e=1.75e7             #Hz     #Plasma Collisionality
+heRatio=1.0             #arb.   #Helium Fraction
+neRatio=0.0             #arb.   #Neon Fraction
+lambdaPerp=0.44822261   #m      #Perpendicular wavelength
+
+#Data Directory
+data_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/Karavaev Benchmark/'
+
+#Data Filenames
+filenameX='Bx_XY_Plane_freq_80KHz_withDamping_withPML_3rdOrder.hdf'
+filenameY='By_XY_Plane_freq_80KHz_withDamping_withPML_3rdOrder.hdf'
+
+#Frame Directory
+savepath_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/B_perp_karavaev_freq_80KHz_withDamping_withPML_3rdOrder/'
+
+#Number of frames
+numFrames=8
+
+#Create the directory
+if not os.path.exists(savepath_dir):
+    os.makedirs(savepath_dir)
+
+#%%
+
+# =============================================================================
+# Derived Values
+# =============================================================================
+
+Omega_He=q_p*magB/(4*m_amu) #Helium Cyclotron Frequency
+
+#%%
+
+# =============================================================================
+# Functions
+# =============================================================================
 
 def dataArr(filename):
     """
@@ -157,8 +173,8 @@ def interpData(ampData,xVals,yVals):
     """
 
     #Create the target grid of the interpolation
-    xi=np.linspace(-radLim,radLim,301)
-    yi=np.linspace(-radLim,radLim,301)
+    xi=np.linspace(-0.5,0.5,201)
+    yi=np.linspace(-0.5,0.5,201)
     xi,yi=np.meshgrid(xi,yi)
 
     #Interpolate the data
@@ -166,90 +182,92 @@ def interpData(ampData,xVals,yVals):
 
     return interpData,xi,yi
 
-#Calculate the cyclotron frequency
-#Helium cyclotron frequency
-cycFreqHe=q_p*magB/(4*m_amu) #rad/s
-#Neon cyclotron frequency
-cycFreqNe=q_p*magB/(20*m_amu) #rad/s
+def createFrame(Bx,By,X,Y,freq,savepath_dir,frameNum,totFrames=numFrames):
+    """
 
-#Normalized Frequency
-normFreq=2*np.pi*freq*1000/cycFreqNe
+    Args:
+        Bx (numpy.array): B_x component of the data.
+        By (numpy.array): B_y component of the data.
+        X (numpy.array): x position of the data.
+        Y (numpy.array): y position of the data.
+        freq (int): Linear frequency of the antenna.
+        savepath_dir (string): Directory in which to save all the frames.
+        frameNum (int): Current frame number.
+        totFrames (int, optional): Total number of frames in the animation. Defaults to numFrames.
 
-#Get the LH Fraction
-ratioArr=[]
-for z in zPosArr:
+    Returns:
+        Saves the frame in the savepath_dir directory
+        
+    """
     
-    #Location of the data
-    BxString=dataDir+'Bx_XY_Plane_z_'+str(z)+'cm.hdf'
-    ByString=dataDir+'By_XY_Plane_z_'+str(z)+'cm.hdf'
+    #Angular frequency
+    omega=2*np.pi*freq*1000
     
-    #Get the data
-    Bx,X,Y=dataArr(BxString)
-    By,X,Y=dataArr(ByString)
+    #Normalized angular frequency
+    freqNorm=np.round(omega/Omega_He,2)
+
+    #Calcualate the time in the wave period
+    time=(2*np.pi/omega)*((frameNum-1)/(totFrames-1))
+
+    #Exponential to go from freq to time domain
+    expVal=np.e**(-1j*omega*time)
+
+    #Inverse fourier transform
+    BxTD=Bx*expVal
+    ByTD=By*expVal
+
+    #Take the real value (as that is what we experimentally observe)
+    BxReal=np.real(BxTD)
+    ByReal=np.real(ByTD)
     
-    #Drop values beyond the radial limit
-    #Array to traverse the list backwards
-    indexArr=np.flip(np.arange(0,len(X),1))
-    for i in indexArr:
-        #Check if we are outside the radial limit
-        if (X[i]**2+Y[i]**2)>radLim**2:
-            #Remove elements out of bounds
-            X=np.delete(X,i)
-            Y=np.delete(Y,i)
-            Bx=np.delete(Bx,i)
-            By=np.delete(By,i)
-            
-    #Left Handed Wave
-    BLeft=(1/np.sqrt(2))*(Bx+1j*By)
-    BLeftAbs=np.abs(BLeft)**2
-    #Right Handed Wave
-    BRight=(1/np.sqrt(2))*(Bx-1j*By)
-    BRightAbs=np.abs(BRight)**2
+    #Get the perpendicular component
+    B_perp=np.sqrt(BxReal**2+ByReal**2)
     
     #Interpolate the data
-    BLeftInterpTemp,xi,yi=interpData(BLeftAbs,X,Y)
-    BRightInterpTemp,xi,yi=interpData(BRightAbs,X,Y)
-
-    #Replace all nan values with 0
-    BLeftInterp=np.nan_to_num(BLeftInterpTemp)
-    BRightInterp=np.nan_to_num(BRightInterpTemp)
+    BPerpInterp,xi,yi=interpData(B_perp,X,Y)
     
-    #Integrate over one axis
-    tempIntegralLeft=np.trapz(BLeftInterp,axis=0)
-    tempIntegralRight=np.trapz(BRightInterp,axis=0)
-    #Integrate over the other axis
-    integralLeft=np.trapz(tempIntegralLeft)
-    integralRight=np.trapz(tempIntegralRight)
-
-    #Get the LH Fraction
-    ratio=integralLeft/(integralRight+integralLeft)
+    # =============================================================================
+    # Plot the data  
+    # =============================================================================
     
-    #Append the fraction to the array
-    ratioArr.append(ratio)
+    plt.figure(figsize=(8,8))
+    
+    #Plot the data
+    plt.contourf(xi,yi,BPerpInterp,levels=500,vmin=0,vmax=1.5e-10,cmap='jet')
+    
+    #Add title and axes labels
+    plt.xlabel('Y [m]')
+    plt.ylabel('X [m]')
+    
+    #Add axes limits
+    plt.xlim(-0.25,0.25)
+    plt.ylim(-0.25,0.25)
+    
+    #Add the grid
+    plt.grid(True)
+    
+    #Save the figure
+    plt.savefig(savepath_dir+'frameNum_'+str(frameNum)+'.png',bbox_inches='tight',dpi=300)
+    plt.close()
+
+#%%
     
 # =============================================================================
-# Plot the data
+# Analysis and Ploting
 # =============================================================================
-    
-#Save the data in a text file
-np.savetxt('C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/freq_'+str(freq)+'KHz_col_'+str(int(nu_e/1000))+'KHz/ratioArr_r_3cm.txt',ratioArr)
-np.savetxt('C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/freq_'+str(freq)+'KHz_col_'+str(int(nu_e/1000))+'KHz/zPosArr.txt',zPosArr)
 
-plt.figure(figsize=(15,4))
-plt.plot(zPosArr,ratioArr)
+#Get the data
+Bx,X,Y=dataArr(data_dir+filenameX)
+By,X,Y=dataArr(data_dir+filenameY)
 
-#Add labels and titles
-plt.title(r'$\omega/\Omega_{Neon}$='+str(np.round(normFreq,2))+r'; $\nu_{ei}$='+str(nu_e/1e3)+'KHz')
-plt.xlabel('Z [cm]')
-plt.ylabel(r'LH Fraction [$|B_L|^2/(|B_R|^2+|B_L|^2)$]',rotation=90)
-
-#Axes parameters
-plt.xlim(0,1000)
-plt.ylim(0.4,0.6)
-plt.xticks(np.arange(0,1001,100))
-
-#Misc
-plt.grid(True)
-# plt.savefig(savepath,dpi=600,bbox_to_inches='tight')
+plt.figure(figsize=(10,10))
+plt.scatter(Y,X)
+plt.xlim(-0.15,0.15)
+plt.ylim(-0.15,0.15)
 plt.show()
 plt.close()
+
+#Create the frames
+for i in range(numFrames):
+    print('Creating frame '+str(i+1)+' of '+str(numFrames))
+    createFrame(Bx,By,X,Y,freq,savepath_dir,i+1)

@@ -17,19 +17,19 @@ from matplotlib import ticker
 ###############################################################################
 #############################User defined variables############################
 ###############################################################################
-freq=206 #KHz #Antenna Frequency
+freq=343 #KHz #Antenna Frequency
 Omega_ci=115.17 #KHz #Neon Cyclotron frequency
-col=0 #KHz #Collisionality
-numFrames=60 #Number of frames in the animation
+col=5000 #KHz #Collisionality
+numFrames=3 #Number of frames in the animation
 
 #Options to decide what part of the program executes
 createAnimFrames=True
 createTimeAvgPlot=False
 
 #Data directory
-data_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/By_XZ_Plane_karavaev_withoutdamping_withoutPML.hdf'
+data_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/PML Test/By_XZ_Plane_freq_343KHz.hdf'
 #Directory in which to save all the frames
-savepath_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/waveprop_newDensity_'+str(freq)+'KHz/'
+savepath_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/newDensity_withPML_'+str(freq)+'KHz/'
 #Directory to save the time averaged image
 timeAvg_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/timeAvg_By_'+str(freq)+'KHz_fullChamber_col_'+str(col)+'KHz.png'
 ###############################################################################
@@ -231,7 +231,7 @@ if createTimeAvgPlot==True:
     #Only take the real part and average
     ByAvg=np.abs(np.real(sumArr)/30)
 
-    #################################  Plotting  #################################
+    #################################  Plotting  ##############################
 
     #Increase the number of levels in the plot
     maxExp=-6.0

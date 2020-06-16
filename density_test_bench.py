@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 #Equilibrium Values
-fwhm=0.3 #FWHM
+fwhm=0.5 #FWHM
 bMag0=0.05 #Magnetic Field Strength
 a=15 #Steepness of the dropoff
 
@@ -42,6 +42,23 @@ xvals=np.arange(-0.5,0.51,0.01)
 yvals=np.arange(-0.5,0.51,0.01)
 zvals=np.arange(-10,10.1,0.1)
 
+#%%
+# =============================================================================
+# X lineplot
+# =============================================================================
+
+#Array to store the density
+densArr=[]
+for x in xvals:
+    densArr.append(density(x,0,0))
+
+#Plot the data
+plt.plot(xvals,densArr)
+plt.grid()
+plt.xlim(-0.5,0.5)
+plt.show()
+
+#%%
 ########################################
 #XY Plane#
 ########################################
@@ -81,6 +98,7 @@ p2=plt.grid()
 #p2=plt.savefig('C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/Y_Line_Plot.png',dpi=900)
 p2=plt.show()
 
+#%%
 ########################################
 #XZ Plane#
 ########################################
