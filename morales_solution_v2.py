@@ -22,17 +22,22 @@ m_amu=1.66053906660e-27 #Atomic Mass Unit
 
 #Plasma parameters
 freq=192 #KHz #Antenna frequency
-B=0.1 #T #Background magnetic field strength
+B=0.1    #T #Background magnetic field strength
 n=1.4e18 #m^{-3} #Density
+col=
+
+#Antenna Parameters
 a=0.0025 #m #Antenna thickness
-d=0.04 #m #Antenna radius
+d=0.04   #m #Antenna radius
 sigma0=1 #C #Antenna charge
 
+#General savepath directory
+savepath_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/'
 #Savepath directory from frame animations
-savepath_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/morales_solution_By_XZ_Plane/'
+anim_dir=savepath_dir+'morales_solution_By_XZ_Plane/'
 #Create the directory
-if not os.path.exists(savepath_dir):
-    os.makedirs(savepath_dir)
+if not os.path.exists(anim_dir):
+    os.makedirs(anim_dir)
 #Number of frames in the animation
 numFrames=60
 
@@ -40,6 +45,8 @@ numFrames=60
 data_savepath='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/Morales Solution/'
 #Plot with saved data or new data
 savedDataPlot=False
+#Overwrite the currently saved data
+saveData=True
  
 #Derived parameters
 #Frequencies
@@ -89,7 +96,7 @@ def BThetaIntegrandReal(k,r,z):
         integrand (float): Integrand for B_theta
     """
     
-    sinTerm=np.sin(k*a)/k
+    sinTerm=np.sinc(k*a/np.pi)*(a/np.pi)
     expTerm=np.e**(1j*z*kPar(k))
     besselTerm=sc.special.jv(1,k*r)
     
@@ -110,7 +117,7 @@ def BThetaIntegrandImag(k,r,z):
         integrand (float): Integrand for B_theta
     """
     
-    sinTerm=np.sin(k*a)/k
+    sinTerm=np.sinc(k*a/np.pi)*(a/np.pi)
     expTerm=np.e**(1j*z*kPar(k))
     besselTerm=sc.special.jv(1,k*r)
     
@@ -135,11 +142,11 @@ def BTheta(r,z,omega):
     constTerm=2*i0/(c*a)
     
     #Integrate the real and imag parts seperately
-    # realTerm=integrator(BThetaIntegrandReal,r,z,0.001,4000,2000)
-    # imagTerm=integrator(BThetaIntegrandImag,r,z,0.001,4000,2000)
+    realTerm=integrator(BThetaIntegrandReal,r,z,0.001,4000,2000)
+    imagTerm=integrator(BThetaIntegrandImag,r,z,0.001,4000,2000)
     
-    realTerm=quad(BThetaIntegrandReal,0.001,np.infty,args=(r,z))[0]
-    imagTerm=quad(BThetaIntegrandImag,0.001,np.infty,args=(r,z))[0]
+    # realTerm=quad(BThetaIntegrandReal,0.001,np.infty,args=(r,z))[0]
+    # imagTerm=quad(BThetaIntegrandImag,0.001,np.infty,args=(r,z))[0]
     
     b_theta=constTerm*(realTerm+1j*imagTerm)
     
@@ -348,7 +355,7 @@ def newSolGlobal(x,y,z,d,omega):
     
     return Bx,By,regionNumL,regionNumR
 
-def createFrameXY(fieldVal,xi,yi,omega,savepath_dir,frameNum,totFrames=numFrames):
+def createFrameXY(fieldVal,xi,yi,omega,animDir,frameNum,totFrames=numFrames):
     """
     Creates the contour plot for a specific frame
 
@@ -356,7 +363,7 @@ def createFrameXY(fieldVal,xi,yi,omega,savepath_dir,frameNum,totFrames=numFrames
         fieldVal (complex): 2D Array of the field value
         xi,yi (float): 2D Arrays with the positions of the data
         omega (float): Angular antenna frequency
-        savepath_dir (string): Directory to store the frames
+        animDir (string): Directory to store the frames
         frameNum (int): Specific frame that is being plotted (starts at 1)
         totFrames (int, optional): Total number of frames in the animation. Defaults to numFrames.
     """
@@ -386,10 +393,10 @@ def createFrameXY(fieldVal,xi,yi,omega,savepath_dir,frameNum,totFrames=numFrames
     plt.contourf(xi,yi,fieldValReal,levels=100)
     
     #Save and close
-    plt.savefig(savepath_dir+'frameNum_'+str(frameNum)+'.png',bbox_inches='tight',dpi=300)
+    plt.savefig(animDir+'frameNum_'+str(frameNum)+'.png',bbox_inches='tight',dpi=300)
     plt.close()
 
-def createFrameXZ(fieldVal,xi,zi,omega,savepath_dir,frameNum,totFrames=numFrames):
+def createFrameXZ(fieldVal,xi,zi,omega,animDir,frameNum,totFrames=numFrames):
     """
     Creates the contour plot for a specific frame
 
@@ -397,7 +404,7 @@ def createFrameXZ(fieldVal,xi,zi,omega,savepath_dir,frameNum,totFrames=numFrames
         fieldVal (complex): 2D Array of the field value
         xi,zi (float): 2D Arrays with the positions of the data
         omega (float): Angular antenna frequency
-        savepath_dir (string): Directory to store the frames
+        animDir (string): Directory to store the frames
         frameNum (int): Specific frame that is being plotted (starts at 1)
         totFrames (int, optional): Total number of frames in the animation. Defaults to numFrames.
     """
@@ -427,10 +434,10 @@ def createFrameXZ(fieldVal,xi,zi,omega,savepath_dir,frameNum,totFrames=numFrames
     plt.contourf(zi,xi,fieldValReal,levels=100)
     
     #Save and close
-    plt.savefig(savepath_dir+'frameNum_'+str(frameNum)+'.png',bbox_inches='tight',dpi=300)
+    plt.savefig(animDir+'frameNum_'+str(frameNum)+'.png',bbox_inches='tight',dpi=300)
     plt.close()
 
-def createFramePerp(BxVals,ByVals,xi,yi,omega,savepath_dir,frameNum,totFrames=numFrames):
+def createFramePerp(BxVals,ByVals,xi,yi,omega,animDir,frameNum,totFrames=numFrames):
     """
     Creates the contour plot for the perpendicular wave field component
 
@@ -438,7 +445,7 @@ def createFramePerp(BxVals,ByVals,xi,yi,omega,savepath_dir,frameNum,totFrames=nu
         BxVals,ByVals (complex): 2D Array of the field values
         xi,yi (float): 2D Arrays with the positions of the data
         omega (float): Angular antenna frequency
-        savepath_dir (string): Directory to store the frames
+        animDir (string): Directory to store the frames
         frameNum (int): Specific frame that is being plotted (starts at 1)
         totFrames (int, optional): Total number of frames in the animation. Defaults to numFrames.
     """
@@ -473,7 +480,7 @@ def createFramePerp(BxVals,ByVals,xi,yi,omega,savepath_dir,frameNum,totFrames=nu
     plt.contourf(xi,yi,fieldValPerp,levels=100)
     
     #Save and close
-    plt.savefig(savepath_dir+'frameNum_'+str(frameNum)+'.png',bbox_inches='tight',dpi=300,cmap='jet')
+    plt.savefig(animDir+'frameNum_'+str(frameNum)+'.png',bbox_inches='tight',dpi=300,cmap='jet')
     plt.close()
 
 #%%
@@ -522,11 +529,12 @@ for yInd in tqdm(range(len(yArr)),position=0):
         regionNumLArr[yInd,xInd]=regionNumL
         regionNumRArr[yInd,xInd]=regionNumR
 
-#Save the data
-np.save(data_savepath+'freq_'+str(freq)+'KHz_By_XY_Plane.npy',bYArr)
-np.save(data_savepath+'freq_'+str(freq)+'KHz_Bx_XY_Plane.npy',bXArr)
-np.save(data_savepath+'freq_'+str(freq)+'KHz_yi_XY_Plane.npy',yi)
-np.save(data_savepath+'freq_'+str(freq)+'KHz_xi_XY_Plane.npy',xi)
+if saveData==True:
+    #Save the data
+    np.save(data_savepath+'freq_'+str(freq)+'KHz_By_XY_Plane.npy',bYArr)
+    np.save(data_savepath+'freq_'+str(freq)+'KHz_Bx_XY_Plane.npy',bXArr)
+    np.save(data_savepath+'freq_'+str(freq)+'KHz_yi_XY_Plane.npy',yi)
+    np.save(data_savepath+'freq_'+str(freq)+'KHz_xi_XY_Plane.npy',xi)
 
 #%%
 # =============================================================================
@@ -553,11 +561,12 @@ for xInd in tqdm(range(len(xArr)),position=0):
         regionNumLArr[xInd,zInd]=regionNumL
         regionNumRArr[xInd,zInd]=regionNumR
 
-#Save the data
-np.save(data_savepath+'freq_'+str(freq)+'KHz_By_XZ_Plane.npy',bYArr)
-np.save(data_savepath+'freq_'+str(freq)+'KHz_Bx_XZ_Plane.npy',bXArr)
-np.save(data_savepath+'freq_'+str(freq)+'KHz_zi_XZ_Plane.npy',zi)
-np.save(data_savepath+'freq_'+str(freq)+'KHz_xi_XZ_Plane.npy',xi)
+if saveData==True:
+    #Save the data
+    np.save(data_savepath+'freq_'+str(freq)+'KHz_By_XZ_Plane.npy',bYArr)
+    np.save(data_savepath+'freq_'+str(freq)+'KHz_Bx_XZ_Plane.npy',bXArr)
+    np.save(data_savepath+'freq_'+str(freq)+'KHz_zi_XZ_Plane.npy',zi)
+    np.save(data_savepath+'freq_'+str(freq)+'KHz_xi_XZ_Plane.npy',xi)
 
 #%%
 # =============================================================================
@@ -567,7 +576,7 @@ np.save(data_savepath+'freq_'+str(freq)+'KHz_xi_XZ_Plane.npy',xi)
 #Animation
 for i in range(numFrames):
     print('Creating frame '+str(i+1)+' of '+str(numFrames))
-    createFramePerp(bXArr,bYArr,xi,yi,omega,savepath_dir,i+1)
+    createFramePerp(bXArr,bYArr,xi,yi,omega,anim_dir,i+1)
 
 #%%
 # =============================================================================
@@ -577,7 +586,7 @@ for i in range(numFrames):
 #Animation
 for i in range(numFrames):
     print('Creating frame '+str(i+1)+' of '+str(numFrames))
-    createFrameXZ(bYArr,xi,zi,omega,savepath_dir,i+1)
+    createFrameXZ(bYArr,xi,zi,omega,anim_dir,i+1)
     
 #%%
 # =============================================================================
@@ -595,8 +604,9 @@ if savedDataPlot==True:
     plt.title(r'$\Re(B_x)$')
     plt.xlabel('X [m]')
     plt.ylabel('Y [m]')
-    plt.contourf(xi,yi,np.real(bXArr),levels=100)
+    plt.contourf(xi,yi,np.real(bXArr),levels=100,cmap='jet')
     plt.colorbar()
+    plt.savefig(savepath_dir+'Bx_XY_Plane_freq_'+str(freq)+'KHz_moralesSolution.png',dpi=300)
     plt.show()
     plt.close()
     
@@ -605,8 +615,9 @@ if savedDataPlot==True:
     plt.title(r'$\Re(B_y)$')
     plt.xlabel('X [m]')
     plt.ylabel('Y [m]')
-    plt.contourf(xi,yi,np.real(bYArr),levels=100)
+    plt.contourf(xi,yi,np.real(bYArr),levels=100,cmap='jet')
     plt.colorbar()
+    plt.savefig(savepath_dir+'By_XY_Plane_freq_'+str(freq)+'KHz_moralesSolution.png',dpi=300)
     plt.show()
     plt.close()
     
@@ -616,8 +627,9 @@ else:
     plt.title(r'$\Re(B_x)$')
     plt.xlabel('X [m]')
     plt.ylabel('Y [m]')
-    plt.contourf(xi,yi,np.real(bXArr),levels=100)
+    plt.contourf(xi,yi,np.real(bXArr),levels=100,cmap='jet')
     plt.colorbar()
+    plt.savefig(savepath_dir+'Bx_XY_Plane_freq_'+str(freq)+'KHz_moralesSolution.png',dpi=300)
     plt.show()
     plt.close()
     
@@ -626,8 +638,9 @@ else:
     plt.title(r'$\Re(B_y)$')
     plt.xlabel('X [m]')
     plt.ylabel('Y [m]')
-    plt.contourf(xi,yi,np.real(bYArr),levels=100)
+    plt.contourf(xi,yi,np.real(bYArr),levels=100,cmap='jet')
     plt.colorbar()
+    plt.savefig(savepath_dir+'By_XY_Plane_freq_'+str(freq)+'KHz_moralesSolution.png',dpi=300)
     plt.show()
     plt.close()
     
@@ -637,49 +650,70 @@ else:
 # =============================================================================
 
 if savedDataPlot==True:
+    #Load the data
     bYArr=np.load(data_savepath+'freq_'+str(freq)+'KHz_By_XZ_Plane.npy')
     bXArr=np.load(data_savepath+'freq_'+str(freq)+'KHz_Bx_XZ_Plane.npy')
     zi=np.load(data_savepath+'freq_'+str(freq)+'KHz_zi_XZ_Plane.npy')
     xi=np.load(data_savepath+'freq_'+str(freq)+'KHz_xi_XZ_Plane.npy')
 
+    #Normalize the axes
+    xiNorm=xi*Pi_e/c
+    ziNorm=zi*Pi_e/c
+
     #Bx plot
-    plt.figure(figsize=(10,8))
+    plt.figure(figsize=(16,8))
     plt.title(r'$\Re(B_x)$')
-    plt.xlabel('Z [m]')
-    plt.ylabel('X [m]')
-    plt.contourf(zi,xi,np.real(bXArr),levels=100)
+    plt.xlabel(r'$z\omega_{pe}/c$')
+    plt.ylabel(r'$x\omega_{pe}/c$')
+    plt.xlim(0,2500)
+    plt.ylim(-60,60)
+    plt.contourf(ziNorm,xiNorm,np.real(bXArr),levels=100,cmap='jet')
     plt.colorbar()
+    plt.savefig(savepath_dir+'Bx_XZ_Plane_freq_'+str(freq)+'KHz_moralesSolution.png',dpi=300)
     plt.show()
     plt.close()
     
     #By plot
-    plt.figure(figsize=(10,8))
+    plt.figure(figsize=(16,8))
     plt.title(r'$\Re(B_y)$')
-    plt.xlabel('Z [m]')
-    plt.ylabel('X [m]')
-    plt.contourf(zi,xi,np.real(bYArr),levels=100)
+    plt.xlabel(r'$z\omega_{pe}/c$')
+    plt.ylabel(r'$x\omega_{pe}/c$')
+    plt.xlim(0,2500)
+    plt.ylim(-60,60)
+    plt.contourf(ziNorm,xiNorm,np.real(bYArr),levels=100,cmap='jet')
     plt.colorbar()
+    plt.savefig(savepath_dir+'By_XZ_Plane_freq_'+str(freq)+'KHz_moralesSolution.png',dpi=300)
     plt.show()
     plt.close()
 
 else:
+    #Normalize the axes
+    xiNorm=xi*Pi_e/c
+    ziNorm=zi*Pi_e/c
+    
     #Bx plot
-    plt.figure(figsize=(10,8))
+    plt.figure(figsize=(16,8))
     plt.title(r'$\Re(B_x)$')
-    plt.xlabel('Z [m]')
-    plt.ylabel('X [m]')
-    plt.contourf(zi,xi,np.real(bXArr),levels=100)
+    plt.xlabel(r'$z\omega_{pe}/c$')
+    plt.ylabel(r'$x\omega_{pe}/c$')
+    plt.xlim(0,2500)
+    plt.ylim(-60,60)
+    plt.contourf(ziNorm,xiNorm,np.real(bXArr),levels=100,cmap='jet')
     plt.colorbar()
+    plt.savefig(savepath_dir+'Bx_XZ_Plane_freq_'+str(freq)+'KHz_moralesSolution.png',dpi=300)
     plt.show()
     plt.close()
     
     #By plot
-    plt.figure(figsize=(10,8))
+    plt.figure(figsize=(16,8))
     plt.title(r'$\Re(B_y)$')
-    plt.xlabel('Z [m]')
-    plt.ylabel('X [m]')
-    plt.contourf(zi,xi,np.real(bYArr),levels=100)
+    plt.xlabel(r'$z\omega_{pe}/c$')
+    plt.ylabel(r'$x\omega_{pe}/c$')
+    plt.xlim(0,2500)
+    plt.ylim(-60,60)
+    plt.contourf(ziNorm,xiNorm,np.real(bYArr),levels=100,cmap='jet')
     plt.colorbar()
+    plt.savefig(savepath_dir+'By_XZ_Plane_freq_'+str(freq)+'KHz_moralesSolution.png',dpi=300)
     plt.show()
     plt.close()
 

@@ -19,10 +19,10 @@ from scipy.interpolate import griddata
 freqArr=[37,80,108,206,275,343,378,446,480,500,530,560] #Array with all the frequencies
 
 #Data Directory
-data_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/PML Test/'
+data_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/Offset Antenna/'
 
 #Savepath Location
-savepath='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/angular_wavenumber_withPML.png'
+savepath='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/angular_wavenumber_offsetAntenna.png'
 ###############################################################################
 
 #Fundamental values (S.I.)
@@ -431,7 +431,7 @@ for freq in freqArr:
     
     #Remove all values where z<0.2m and z>8m
     for z in zVals[::-1]:
-        if z<0.2 or z>8:
+        if z<-6.8 or z>8:
             ByAmp=np.delete(ByAmp,np.where(zVals==z))
             zVals=np.delete(zVals,np.where(zVals==z))
     
@@ -487,6 +487,9 @@ plt.scatter(normFreqArr,kParArr,label='Simulation Data',color='red')
 plt.plot(normFreqArrAnal,finiteKPerpArr,label=r'$\lambda_{\perp}/\delta_e=$'+str(np.round(normLambdaPerp,2)))
 plt.plot(normFreqArrAnal,lhpArr,label=r'LHP ($\lambda_{\perp}/\delta_e=\infty$)',linestyle='dashed')
 plt.plot(normFreqArrAnal,rhpArr,label=r'RHP ($\lambda_{\perp}/\delta_e=\infty$)',linestyle='dashed')
+
+#Plot the errorbar
+plt.errorbar(normFreqArr,kParArr,yerr=errBar/2,fmt='o')
 
 #Plot the normalized frequencies
 plt.plot([1,1],[0,max(kParArr)+0.5],label=r'$\Omega_{Neon}$',color='k',linestyle='-')

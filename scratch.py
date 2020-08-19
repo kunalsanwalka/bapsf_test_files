@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr 22 10:23:47 2020
+Created on Tue Jul  7 14:33:08 2020
 
 @author: kunalsanwalka
 """
 
-import h5py
 import numpy as np
 import matplotlib.pyplot as plt
-from tqdm import tqdm
+import h5py
 from scipy.interpolate import griddata
 
 ###############################################################################
@@ -21,10 +20,10 @@ from scipy.interpolate import griddata
 freq=500
 
 #Radial limit (radius upto which we want to integrate the solution)
-radLim=0.3
+radLim=0.03
 
 #Array with the positions of the slices
-zPosArr=np.arange(-700,801,25) #cm
+zPosArr=np.arange(-525,801,25) #cm
 
 #Plasma Parameters
 #Magnetic field
@@ -49,6 +48,7 @@ q_p=1.60217662e-19      #Proton Charge
 m_e=9.10938356e-31      #Electron Mass
 m_amu=1.66053906660e-27 #Atomic Mass Unit
 
+#%%
 def dataArr(filename):
     """
     This function takes the name of an hdf5 file and returns the relevant data arrays
@@ -167,18 +167,10 @@ def interpData(ampData,xVals,yVals):
 
     return interpData,xi,yi
 
-#Calculate the cyclotron frequency
-#Helium cyclotron frequency
-cycFreqHe=q_p*magB/(4*m_amu) #rad/s
-#Neon cyclotron frequency
-cycFreqNe=q_p*magB/(20*m_amu) #rad/s
-
-#Normalized Frequency
-normFreq=2*np.pi*freq*1000/cycFreqNe
-
+#%%
 #Get the LH Fraction
 ratioArr=[]
-for z in tqdm(zPosArr,position=0):
+for z in zPosArr:
     
     #Location of the data
     BxString=dataDir+'Bx_XY_Plane_z_'+str(z)+'cm.hdf'
@@ -250,31 +242,3 @@ for z in tqdm(zPosArr,position=0):
     
     #Append the fraction to the array
     ratioArr.append(ratio)
-
-#%%
-# =============================================================================
-# Plot the data
-# =============================================================================
-    
-#Save the data in a text file
-np.savetxt('C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/freq_'+str(freq)+'KHz_col_'+str(int(nu_e/1000))+'KHz/ratioArr_r_3cm.txt',ratioArr)
-np.savetxt('C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/freq_'+str(freq)+'KHz_col_'+str(int(nu_e/1000))+'KHz/zPosArr.txt',zPosArr)
-
-plt.figure(figsize=(15,4))
-plt.plot(zPosArr,ratioArr)
-
-#Add labels and titles
-plt.title(r'$\omega/\Omega_{Neon}$='+str(np.round(normFreq,2))+r'; $\nu_{ei}$='+str(nu_e/1e3)+'KHz')
-plt.xlabel('Z [cm]')
-plt.ylabel(r'LH Fraction [$|B_L|^2/(|B_R|^2+|B_L|^2)$]',rotation=90)
-
-#Axes parameters
-# plt.xlim(0,1000)
-# plt.xticks(np.arange(0,1001,100))
-plt.ylim(0.4,0.6)
-
-#Misc
-plt.grid(True)
-# plt.savefig(savepath,dpi=600,bbox_to_inches='tight')
-plt.show()
-plt.close()

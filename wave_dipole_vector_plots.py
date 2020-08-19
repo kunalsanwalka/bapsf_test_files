@@ -18,9 +18,9 @@ from scipy.interpolate import griddata
 #############################User defined variables############################
 ###############################################################################
 #User defined variables
-freq=480#KHz #Frequency of the antenna
+freq=500#KHz #Frequency of the antenna
 col=5000#KHz Collisionality of the plasma
-z=2.5#m #Location of the place where data was taken
+z=1#m #Location of the place where data was taken
 
 #Convert z to cm
 zCm=z*100
@@ -29,11 +29,21 @@ zCm=z*100
 numFrames=60
 
 #Names of the read/write files
-#Data
-filenameX='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/freq_'+str(freq)+'KHz_col_'+str(col)+'KHz/Bx_XY_Plane_z_'+str(int(np.round(zCm)))+'cm.hdf'
-filenameY='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/freq_'+str(freq)+'KHz_col_'+str(col)+'KHz/By_XY_Plane_z_'+str(int(np.round(zCm)))+'cm.hdf'
+#Data directory
+data_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/'
+
+#Filepath of the data
+# filenameX=data_dir+'freq_'+str(freq)+'KHz_col_'+str(col)+'KHz/Bx_XY_Plane_z_'+str(int(np.round(zCm)))+'cm.hdf'
+# filenameY=data_dir+'freq_'+str(freq)+'KHz_col_'+str(col)+'KHz/By_XY_Plane_z_'+str(int(np.round(zCm)))+'cm.hdf'
+filenameX=data_dir+'Ex_XY_Plane_freq_500KHz_fineMesh_10cm_col_5000KHz.hdf'
+filenameY=data_dir+'Ey_XY_Plane_freq_500KHz_fineMesh_10cm_col_5000KHz.hdf'
+
 #Directory in which to save all the frames
-savepath_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/dipole_'+str(freq)+'KHz_col_'+str(col)+'KHz/'
+savepath_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/EFIELD_dipole_'+str(freq)+'KHz_col_'+str(col)+'KHz_fineMesh_10cm/'
+
+#Axes limits for the plots
+xAxisLim=20
+yAxisLim=20
 ###############################################################################
 
 #Create the directory
@@ -149,8 +159,8 @@ def interpData(ampData,xVals,yVals):
     """
 
     #Create the target grid of the interpolation
-    xi=np.linspace(-0.5,0.5,100)
-    yi=np.linspace(-0.5,0.5,100)
+    xi=np.linspace(-0.5,0.5,101)
+    yi=np.linspace(-0.5,0.5,101)
     xi,yi=np.meshgrid(xi,yi)
 
     #Decompose into real an imaginary parts
@@ -234,13 +244,14 @@ def plotData(BX,BY,xi,yi,expArr,t,savepath_dir):
     #Add axes labels and title
     p1=plt.xlabel('X [cm]',fontsize=20)
     p1=plt.ylabel('Y [cm]',fontsize=20)
-    p1=plt.title('Alfven Wave Dipole; Frequency='+str(freq)+r'KHz; $\nu_{ei}$='+str(col)+'KHz',fontsize=19,y=1.02)
+    # p1=plt.title('Alfven Wave Dipole; Frequency='+str(freq)+r'KHz; $\nu_{ei}$='+str(col)+'KHz',fontsize=19,y=1.02)
+    p1=plt.title('E Field; Frequency='+str(freq)+r'KHz; $\nu_{ei}$='+str(col)+'KHz',fontsize=19,y=1.02)
     
     #Set axes parameters
     p1=plt.xticks(np.arange(-50,51,5))
     p1=plt.yticks(np.arange(-50,51,5))
-    p1=plt.xlim(-12,12)
-    p1=plt.ylim(-12,12)
+    p1=plt.xlim(-xAxisLim,xAxisLim)
+    p1=plt.ylim(-yAxisLim,yAxisLim)
     
     #Add colorbar
     cbar=plt.colorbar()
@@ -277,8 +288,8 @@ expArr=np.e**(-1j*omega*tArr)
 initU,Xu,Yu=dataArr(filenameX)
 initV,Xv,Yv=dataArr(filenameY)
 #Rescale
-initU*=3e8 #Bx
-initV*=3e8 #By
+initU*=1e3 #Bx
+initV*=1e3 #By
 
 #Interpolate the data
 BXGrid,xi,yi=interpData(initU,Xu,Yu)
@@ -288,6 +299,27 @@ BYGrid,xi,yi=interpData(initV,Xv,Yv)
 xi*=100
 yi*=100
 
-#Generate all the frames for animation
+#%%
+# =============================================================================
+# Generate all the frames for animation
+# =============================================================================
 for i in range(len(expArr)):
     plotData(BXGrid,BYGrid,xi,yi,expArr,i,savepath_dir)
+    
+#%%
+# =============================================================================
+# Linecut plot    
+# =============================================================================
+
+#Get the data along the y=0 axis
+ByArr=BYGrid[50]
+xArr=xi[50]
+
+#Plot the data
+plt.plot(xArr,ByArr)
+plt.grid()
+plt.xlabel('X [cm]')
+plt.ylabel(r'$\Re(B_y)$')
+plt.xlim(-40,40)
+plt.show()
+plt.close()

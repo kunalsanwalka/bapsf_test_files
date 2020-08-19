@@ -18,10 +18,10 @@ from scipy.interpolate import griddata
 freq=480 #KHz #Frequency of the antenna
 
 #Data directory
-data_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/PML Test/'
+data_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/Offset Antenna/'
 
 #Savepath directory
-savepath_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/By_axialAmp_PMLeffect_freq_500KHz.png'
+savepath_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/By_axialAmp_offsetAntenna_freq_500KHz.png'
 # #Name of the data files
 # filenameArr=['By_XZ_Plane_freq_'+str(freq)+'KHz_col_500KHz.hdf','By_XZ_Plane_freq_'+str(freq)+'KHz_newBC.hdf','By_XZ_Plane_freq_'+str(freq)+'KHz_col_2000KHz.hdf','By_XZ_Plane_freq_'+str(freq)+'KHz_col_5000KHz.hdf']
 # #Array with the legend for each datafile
@@ -196,8 +196,8 @@ ax.set_ylabel(r'$\Re(B_y)$')
 
 #Change axis scaling and limits
 # ax.set_yscale('symlog',linthreshy=10e-11)
-ax.set_xlim(0.2,8)
-ax.set_ylim(-1.5e-9,1.5e-9)
+ax.set_xlim(-6,8)
+ax.set_ylim(-1.5e-6,1.5e-6)
 
 #Define legend
 ax.legend()

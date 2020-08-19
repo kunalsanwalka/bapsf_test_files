@@ -11,33 +11,57 @@ import os
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
-plt.rcParams.update({'font.size': 18}) #Change the fontsize
 from matplotlib import ticker
 
-###############################################################################
-#############################User defined variables############################
-###############################################################################
-freq=192 #KHz #Antenna Frequency
-Omega_ci=115.17 #KHz #Neon Cyclotron frequency
-col=5000 #KHz #Collisionality
-numFrames=16 #Number of frames in the animation
+#Fundamental values (S.I. Units)
+c=299792458             #Speed of light
+eps_0=8.85418782e-12    #Vacuum Permittivity
+mu_0=1.25663706212e-6   #Vacuum permeability
+q_e=-1.60217662e-19     #Electron Charge
+q_p=1.60217662e-19      #Proton Charge
+m_e=9.10938356e-31      #Electron Mass
+m_amu=1.66053906660e-27 #Atomic Mass Unit
 
-#Options to decide what part of the program executes
-createAnimFrames=True
-createTimeAvgPlot=False
+#Plasma parameters
+freq=192 #KHz #Antenna frequency
+B=0.1    #T #Background magnetic field strength
+n=1.4e18 #m^{-3} #Density
+heRatio=1.0 #Ratio of Helium in the plasma
+neRatio=0.0 #Ratio of the Neon in the plasma
+col=5*1e6  #Hz #Collisional damping rate
 
+#Antenna parameters
+antOffset=-7 #m #Antenna offset from the center of the plasma
+
+#Plotting parameters
+numFrames=32 #Number of frames in the animation
 #Data directory
 data_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Data/Morales Solution/By_XZ_Plane_morales_withdamping.hdf'
 #Directory in which to save all the frames
 savepath_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/morales_withdamping_'+str(freq)+'KHz/'
 #Directory to save the time averaged image
 timeAvg_dir='C:/Users/kunalsanwalka/Documents/UCLA/BAPSF/Plots_and_Animations/timeAvg_By_'+str(freq)+'KHz_fullChamber_col_'+str(col)+'KHz.png'
-###############################################################################
+
+# =============================================================================
+# Derived parameters
+# =============================================================================
+#Frequencies
+omega=2*np.pi*freq*1000 #rad/s #Angular antenna frequency
+Pi_he=np.sqrt(n*heRatio*q_p**2/(eps_0*4*m_amu)) #rad/s #Helium plasma frequency
+Pi_ne=np.sqrt(n*neRatio*q_p**2/(eps_0*20*m_amu)) #rad/s #Neon plasma frequency
+Pi_e=np.sqrt(n*q_e**2/(eps_0*m_e)) #rad/s #Electron plasma frequency
+Omega_he=q_p*B/(4*m_amu) #rad/s #Helium cyclotron frequency
+Omega_ne=q_p*B/(20*m_amu) #rad/s #Neon cyclotron frequency
 
 #Create the directory
 if not os.path.exists(savepath_dir):
     os.makedirs(savepath_dir)
 
+#%%
+# =============================================================================
+# Functions
+# =============================================================================
+    
 def dataArr(filename):
     """
     This function takes the name of an hdf5 file and returns the relevant data arrays
@@ -134,24 +158,21 @@ def dataArr(filename):
     
     return cdata, xVals, yVals
 
-def createFrame(By,X,Z,freq,saveapath_dir,frameNum,totFrames=numFrames):
+def createFrame(By,X,Z,savepath_dir,frameNum,totFrames=numFrames):
     """
     This function takes the raw data and creates a contour plot for a specific frame
 
     Args:
         By: Array with the complex, frequency domain field value
         X,Z: Co-ordinates of the z-value
-        freq: Frequency of the antenna (KHz)
         savepath: Directory to save the frames
         frameNum: Which specific frame is being plotted (starts at 1)
         totFrames: Total number of frames in the animation
                  : Default value=numFrames
     """
-    #Angular frequency
-    omega=2*np.pi*freq*1000
     
     #Normalized frequency
-    freqNorm=np.round(freq/Omega_ci,2)
+    freqNorm=np.round(omega/Omega_ne,2)
 
     #Calcualate the time in the wave period
     time=(2*np.pi/omega)*((frameNum-1)/(totFrames-1))
@@ -165,95 +186,97 @@ def createFrame(By,X,Z,freq,saveapath_dir,frameNum,totFrames=numFrames):
     #Take the real value (as that is what we experimentally observe)
     ByReal=np.real(ByTD)
     
-    #Take the absolute value as IDK how to have a log plot with negative values
-    ByAbs=np.abs(ByReal)
-
-    ###############################  Plotting  ################################
-
-    #Increase the number of levels in the plot
-    maxExp=-6.0
-    minExp=-15.0
-    lev_exp=np.arange(minExp,maxExp+0.1,0.1)
-    numLevels=np.power(10,lev_exp)
-    #Array with the ticklabels
-    labelArr=[]
-    for i in range(int(minExp),int(maxExp)+1,1):
-        labelArr.append(r'$10^{'+str(i)+'}$')
-    #Array with the values at which to place the ticks
-    tickArr=np.power(10,np.arange(minExp,maxExp+1,1))
-
+    #Normalize the axes
+    xNorm=X*Pi_e/c
+    zNorm=(Z-antOffset)*Pi_e/c
+    
+    #cmap limit
+    cmapLim=1e-6
+    #Levels at which to draw contours
+    numLevels=np.linspace(-cmapLim,cmapLim,100)
+    
     #Create the plot
-    fig=plt.figure(figsize=(35,5))
-    ax=fig.add_subplot(111)
-    p=ax.tricontourf(Z,X,ByAbs,numLevels,locator=ticker.LogLocator())
-    ax.set_title(r'$|\Re(B_y)|$; $\omega/\Omega_{Ne}$='+str(freqNorm)+r'; $\nu_{ei}$='+str(col)+'KHz; Frame='+str(frameNum)+'/'+str(totFrames))
-    ax.set_xlabel('Z [m]')
-    ax.set_ylabel('X [m]')
-    cbar=fig.colorbar(p,ticks=tickArr,pad=0.01)
-    cbar.ax.set_yticklabels(labelArr)
+    fig=plt.figure(figsize=(16,8))
+    plt.tricontourf(zNorm,xNorm,ByReal,numLevels,cmap='jet')
+    plt.xlim(0,2500)
+    plt.ylim(-60,60)
+    
+    plt.title(r'$\Re(B_y)$; $\omega/\Omega_{Ne}$='+str(freqNorm)+r'; $\nu_{ei}$='+str(col/1e6)+'MHz; Frame='+str(frameNum)+'/'+str(totFrames))
+    plt.xlabel(r'$z\omega_{pe}/c$')
+    plt.ylabel(r'$x\omega_{pe}/c$')
+    
     fig.savefig(savepath_dir+'frameNum_'+str(frameNum)+'.png',bbox_inches='tight',dpi=300)
     #plt.show()
     plt.close()
 
     return
 
-#Get the data from the file
+#%%
+# =============================================================================
+# Get the data from the file
+# =============================================================================
+    
 By,X,Z=dataArr(data_dir)
 
 print('Pulled data from the hdf5 file')
 
-#Create the frames
-if createAnimFrames==True:
-    for i in range(numFrames):
-        print('Creating frame '+str(i+1)+' of '+str(numFrames))
-        createFrame(By,X,Z,freq,savepath_dir,i+1)
+#%%
+# =============================================================================
+# Create the frames
+# =============================================================================
 
-#Also create a time averaged plot to see if we have any standing wave patterns
-if createTimeAvgPlot==True:
+for i in range(numFrames):
+    print('Creating frame '+str(i+1)+' of '+str(numFrames))
+    createFrame(By,X,Z,savepath_dir,frameNum=i+1)
 
-    #Angular frequency
-    omega=2*np.pi*freq*1000
-    
-    #Normalized frequency
-    freqNorm=np.round(freq/Omega_ci,2)
+#%%
+# =============================================================================
+# Create the time averaged plot
+# =============================================================================
 
-    #Time step array
-    tArr=np.linspace(0,2*np.pi/omega,30)
+#Angular frequency
+omega=2*np.pi*freq*1000
 
-    #Exponential array to go to the time domain
-    expArr=np.e**(-1j*omega*tArr)
+#Normalized frequency
+freqNorm=np.round(freq/Omega_ne,2)
 
-    #Array to store the sum of different time slices
-    sumArr=np.array([0+0*1j]*len(By))
-    for i in range(len(expArr)):
-        sumArr+=By*expArr[i]
+#Time step array
+tArr=np.linspace(0,2*np.pi/omega,30)
 
-    #Only take the real part and average
-    ByAvg=np.abs(np.real(sumArr)/30)
+#Exponential array to go to the time domain
+expArr=np.e**(-1j*omega*tArr)
 
-    #################################  Plotting  ##############################
+#Array to store the sum of different time slices
+sumArr=np.array([0+0*1j]*len(By))
+for i in range(len(expArr)):
+    sumArr+=By*expArr[i]
 
-    #Increase the number of levels in the plot
-    maxExp=-6.0
-    minExp=-15.0
-    lev_exp=np.arange(minExp,maxExp+0.1,0.1)
-    numLevels=np.power(10,lev_exp)
-    #Array with the ticklabels
-    labelArr=[]
-    for i in range(int(minExp),int(maxExp)+1,1):
-        labelArr.append(r'$10^{'+str(i)+'}$')
-    #Array with the values at which to place the ticks
-    tickArr=np.power(10,np.arange(minExp,maxExp+1,1))
+#Only take the real part and average
+ByAvg=np.abs(np.real(sumArr)/30)
 
-    #Plot the result
-    fig=plt.figure(figsize=(35,5))
-    ax=fig.add_subplot(111)
-    p=ax.tricontourf(Z,X,ByAvg,numLevels,locator=ticker.LogLocator())
-    ax.set_title(r'$\langle|\Re(B_y)|\rangle$; $\omega/Omega_{ci}$='+str(freqNorm)+r'; $\nu_{ei}$='+str(col)+'KHz')
-    ax.set_xlabel('Z [m]')
-    ax.set_ylabel('X [m]')
-    cbar=fig.colorbar(p,ticks=tickArr,pad=0.01)
-    cbar.ax.set_yticklabels(labelArr)
-    fig.savefig(timeAvg_dir,bbox_inches='tight',dpi=300)
-    plt.show()
-    plt.close()
+#################################  Plotting  ##############################
+
+#Increase the number of levels in the plot
+maxExp=-6.0
+minExp=-15.0
+lev_exp=np.arange(minExp,maxExp+0.1,0.1)
+numLevels=np.power(10,lev_exp)
+#Array with the ticklabels
+labelArr=[]
+for i in range(int(minExp),int(maxExp)+1,1):
+    labelArr.append(r'$10^{'+str(i)+'}$')
+#Array with the values at which to place the ticks
+tickArr=np.power(10,np.arange(minExp,maxExp+1,1))
+
+#Plot the result
+fig=plt.figure(figsize=(35,5))
+ax=fig.add_subplot(111)
+p=ax.tricontourf(Z,X,ByAvg,numLevels,locator=ticker.LogLocator())
+ax.set_title(r'$\langle|\Re(B_y)|\rangle$; $\omega/Omega_{ci}$='+str(freqNorm)+r'; $\nu_{ei}$='+str(col)+'KHz')
+ax.set_xlabel('Z [m]')
+ax.set_ylabel('X [m]')
+cbar=fig.colorbar(p,ticks=tickArr,pad=0.01)
+cbar.ax.set_yticklabels(labelArr)
+fig.savefig(timeAvg_dir,bbox_inches='tight',dpi=300)
+plt.show()
+plt.close()
